@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invention Idea Checker</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Invention Idea Checker</h1>
+        <p>Enter your invention idea below, and our AI agent will check if it already exists.</p>
+        <form id="idea-form">
+            <textarea id="idea-text" rows="4" placeholder="Describe your invention here..."></textarea>
+            <button type="submit">Check Idea</button>
+        </form>
+        <div id="results-container" class="hidden">
+            <h2>Results</h2>
+            <div id="results-content"></div>
+        </div>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html> 
