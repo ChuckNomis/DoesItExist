@@ -4,29 +4,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IsExist</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="alternate icon" href="/static/favicon.svg">
+    <link rel="mask-icon" href="/static/favicon.svg" color="#4f46e5">
     <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="theme-switch-wrapper">
-        <label class="theme-switch" for="theme-switch">
-            <input type="checkbox" id="theme-switch" />
-            <div class="slider round"></div>
-        </label>
-    </div>
     <div class="container">
-        <header>
+        <div class="theme-switch-wrapper">
+            <span class="theme-icon light-icon">
+                <i class="fas fa-sun"></i>
+            </span>
+            <label class="theme-switch" for="theme-switch">
+                <input type="checkbox" id="theme-switch" />
+                <div class="slider round"></div>
+            </label>
+            <span class="theme-icon dark-icon">
+                <i class="fas fa-moon"></i>
+            </span>
+        </div>
+        <header class="hero-section">
+            <div class="hero-icon">
+                <i class="fas fa-brain"></i>
+                <i class="fas fa-search"></i>
+            </div>
             <h1>IsExist</h1>
-            <p class="subtitle">Enter your invention idea below, and our AI agent will check if it already exists.</p>
+            <p class="subtitle">Instantly check if your invention idea already exists, using AI-powered research</p>
         </header>
-        <form id="idea-form">
-            <textarea id="idea-text" rows="5" placeholder="Describe your invention here... e.g., 'a coffee cup that keeps drinks at the perfect temperature all day'"></textarea>
-            <button type="submit">Check Idea</button>
+        <form id="idea-form" class="input-section">
+            <label for="idea-text" class="input-label">Describe your invention idea</label>
+            <textarea id="idea-text" rows="5" placeholder='e.g. "An AI-powered umbrella that changes color based on weather data"'></textarea>
+            <button type="submit" class="check-button">
+                <i class="fas fa-search"></i>
+                Check If It Exists
+            </button>
         </form>
         <div id="results-container" class="hidden">
             <div id="results-content"></div>
         </div>
         <footer>
-            <p>Questions or feedback? <a href="https://www.linkedin.com/in/nadav-simon-635075260/" target="_blank" rel="noopener noreferrer">Contact me on LinkedIn</a>.</p>
+            <p>Have a question or feedback • <a href="https://www.linkedin.com/in/nadav-simon-635075260/" target="_blank" rel="noopener noreferrer">Contact me on LinkedIn</a></p>
         </footer>
     </div>
     <script src="/static/script.js"></script>
