@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -6,22 +6,21 @@ from agent.graph import build_graph
 from langchain_core.messages import HumanMessage
 import os
 from dotenv import load_dotenv
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Load environment variables from .env file
 load_dotenv()
 
-# --- DEBUGGING ---
-print("--- ENVIRONMENT DEBUG ---")
-print(f"Loaded OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY')}")
-print(f"Loaded TAVILY_API_KEY: {os.getenv('TAVILY_API_KEY')}")
-print(f"Loaded LENS_API_KEY: {os.getenv('LENS_API_KEY')}")
-print("-------------------------")
-
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="Invention Checker Agent",
     description="An AI agent that checks if an invention idea already exists.",
     version="0.1.0",
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Mount the static files directory
 static_files_path = os.path.join(os.path.dirname(__file__), "frontend/static")
@@ -36,13 +35,14 @@ class IdeaRequest(BaseModel):
 
 
 @app.post("/check")
-async def check_idea(request: IdeaRequest):
+@limiter.limit("5/minute")
+async def check_idea(request: Request, idea_request: IdeaRequest):
     """
     Accepts an invention idea and returns the agent's verdict.
     """
     initial_state = {
-        "messages": [HumanMessage(content=f"Here is my invention idea: {request.idea}")],
-        "original_idea": request.idea,
+        "messages": [HumanMessage(content=f"Here is my invention idea: {idea_request.idea}")],
+        "original_idea": idea_request.idea,
         "tool_invocation_count": {},
     }
 
@@ -59,7 +59,7 @@ async def check_idea(request: IdeaRequest):
 
 
 @app.get("/")
-async def read_index():
+async def read_index(request: Request):
     """
     Serves the main HTML page.
     """

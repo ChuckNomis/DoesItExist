@@ -4,8 +4,8 @@ from .prompts import system_prompt
 from .tool_registry import (
     parse_idea,
     embed_idea,
-    search_patents,
-    search_academic,
+    patent_search,
+    scholar_search,
     search_web,
     compare_similarity,
     summarize_results
@@ -18,8 +18,8 @@ llm = ChatOpenAI(model="gpt-4o", temperature=0.2)
 tools = [
     parse_idea,
     embed_idea,
-    search_patents,
-    search_academic,
+    patent_search,
+    scholar_search,
     search_web,
     compare_similarity,
     summarize_results

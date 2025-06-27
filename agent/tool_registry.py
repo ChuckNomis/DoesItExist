@@ -1,7 +1,8 @@
 from utils.similarity import calculate_cosine_similarity
 from services.embeddings import get_embedding
-from services.search_lens import search_lens_academic, search_lens_patents
 from services.search_web import get_web_search_results
+from services.search_patent import search_patent
+from services.search_scholar import search_scholar
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
@@ -58,22 +59,30 @@ async def embed_idea(state: dict) -> dict:
 
 
 @tool
-async def search_patents(state: dict) -> dict:
+async def patent_search(state: dict) -> dict:
     """
-    Searches for patents based on the parsed idea using the Lens.org API.
+    Searches for patents based on the parsed idea using the PatentView API.
     """
-    # Temporarily disabled due to API key permissions.
+    summary = state.get("parsed", {}).get("summary")
+    if not summary:
+        return {"search_results": {"patents": "No summary to search."}}
+    results = await search_patent(summary)
     current_results = state.get("search_results", {})
-    current_results["patents"] = "Patent search is disabled. Please ensure you have an active Patent API subscription on Lens.org."
+    current_results["patents"] = results
     return {"search_results": current_results}
 
 
 @tool
-async def search_academic(state: dict) -> dict:
-    """Searches academic papers."""
-    # Temporarily disabled due to API key permissions.
+async def scholar_search(state: dict) -> dict:
+    """
+    Searches for academic papers on Semantic Scholar based on the parsed idea.
+    """
+    summary = state.get("parsed", {}).get("summary")
+    if not summary:
+        return {"search_results": {"scholar": "No summary to search."}}
+    results = await search_scholar(summary)
     current_results = state.get("search_results", {})
-    current_results["academic"] = "Scholarly search is disabled. Please ensure your Lens.org API key is approved for scholarly search."
+    current_results["scholar"] = results
     return {"search_results": current_results}
 
 
@@ -147,11 +156,11 @@ async def summarize_results(state: dict) -> dict:
         snippet = details.get('snippet') or details.get(
             'abstract') or details.get('description', 'No snippet available.')
 
-        formatted_matches += f"- Source Type: {match_type}\n"
-        formatted_matches += f"  - Title: {title}\n"
-        formatted_matches += f"  - Link: {link}\n"
-        formatted_matches += f"  - Similarity Score: {similarity:.2f}\n"
-        formatted_matches += f"  - Snippet: {snippet}\n\n"
+        # Create a cleaner markdown-style string for the prompt
+        formatted_matches += f"- **{title}**\n"
+        formatted_matches += f"  - Snippet: {snippet}\n"
+        formatted_matches += f"  - Similarity: {similarity:.2f}\n"
+        formatted_matches += f"  - Link: [{link}]({link})\n\n"
 
     prompt_text = f"""
     You are an expert invention analyst. Your task is to provide a structured summary and verdict based on the user's idea and the search results provided.
@@ -163,22 +172,23 @@ async def summarize_results(state: dict) -> dict:
     {formatted_matches}
 
     **Instructions:**
-    Based on the information above, please generate a final report with the following structure:
+    Based on the information above, generate a final report. Use this exact structure and markdown formatting. **Do not wrap your response in markdown code fences (```).**
 
-    1.  **Verdict:** Start with a clear verdict. Choose one of the following:
-        - "Verdict: Likely original"
-        - "Verdict: Possibly overlapping with existing inventions"
-        - "Verdict: Clearly already existing"
+    **Verdict:** [Your verdict: "Likely original", "Possibly overlapping", or "Clearly already existing"]
 
-    2.  **Summary:** Below the verdict, provide a concise summary explaining your reasoning.
+    **Summary:** [Your concise summary explaining your reasoning]
 
-    3.  **Top 5 Findings:** List the top 5 most relevant findings that support your verdict. For each finding, provide:
-        - The title or name.
-        - A short explanation of why it's relevant.
-        - The source type (e.g., Patent, Web Page, Academic Paper).
-        - A link to the source.
-
-    Format the findings as a clear, bulleted list. Keep the explanations brief but informative.
+    **Top Findings:**
+    - **[Title of Finding 1]**
+      [Explanation of Finding 1]
+      [Link: clickable link to source 1]
+    - **[Title of Finding 2]**
+      [Explanation of Finding 2]
+      [Link: clickable link to source 2]
+    - **[Title of Finding 3]**
+      [Explanation of Finding 3]
+      [Link: clickable link to source 3]
+    ...and so on for the top findings.
     """
 
     prompt = ChatPromptTemplate.from_messages([
