@@ -47,7 +47,7 @@ async def check_idea(request: Request, idea_request: IdeaRequest):
     }
 
     # Setting a recursion limit to prevent infinite loops
-    config = {"recursion_limit": 10}
+    config = {"recursion_limit": 15}
 
     final_state = await graph.ainvoke(initial_state, config=config)
 

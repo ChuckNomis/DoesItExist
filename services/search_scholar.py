@@ -4,7 +4,8 @@ from .embeddings import get_embedding
 import logging
 import os
 
-logging.basicConfig(level=logging.INFO)
+# Set logging level to WARNING to suppress info logs
+logging.basicConfig(level=logging.WARNING)
 
 
 async def search_scholar(query: str, num_results=5):

@@ -5,14 +5,19 @@ from .embeddings import get_embedding
 import logging
 import os
 
-logging.basicConfig(level=logging.INFO)
+# Set logging level to WARNING to suppress info logs
+logging.basicConfig(level=logging.WARNING)
 
 
-async def search_patent(query: str, num_results=5):
+async def search_patent(query: str, num_results=5, state=None):
     """
     Searches PatentView for similar patents and returns top results with embeddings.
     Uses improved search strategy with multiple approaches and relevance sorting.
     """
+    if state is None:
+        state = {}
+    invocation_count = state.get('tool_invocation_count', {})
+
     url = "https://search.patentsview.org/api/v1/patent/"
 
     # Extract key terms from the query for better searching
@@ -114,12 +119,15 @@ async def search_patent(query: str, num_results=5):
             strategy_results = data.get("patents", [])
 
             if strategy_results:
-                logging.info(
-                    f"Strategy {i+1} found {len(strategy_results)} results")
+                # Remove info logs for strategy results
+                # logging.info(f"Strategy {i+1} found {len(strategy_results)} results")
+                # logging.info(f"Strategy {i+1} returned no results")
                 results = strategy_results
                 break  # Use the first strategy that returns results
             else:
-                logging.info(f"Strategy {i+1} returned no results")
+                # Remove info logs for strategy results
+                # logging.info(f"Strategy {i+1} returned no results")
+                continue
 
         except Exception as e:
             logging.warning(f"Strategy {i+1} failed: {e}")
@@ -190,3 +198,9 @@ async def search_patent(query: str, num_results=5):
         logging.error(
             f"An unexpected error occurred while searching PatentView: {e}")
         return []
+
+    # Add a warning log for potential spamming
+    # Assuming 5 is a threshold for spamming
+    if invocation_count.get('search_patent', 0) > 5:
+        logging.warning(
+            f"Potential spamming detected for tool 'search_patent' from IP: {get_remote_address(request)}")
