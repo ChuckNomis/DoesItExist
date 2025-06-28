@@ -15,7 +15,7 @@ load_dotenv()
 
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
-    title="Invention Checker Agent",
+    title="DoesItExist?",
     description="An AI agent that checks if an invention idea already exists.",
     version="0.1.0",
 )
@@ -47,7 +47,7 @@ async def check_idea(request: Request, idea_request: IdeaRequest):
     }
 
     # Setting a recursion limit to prevent infinite loops
-    config = {"recursion_limit": 15}
+    config = {"recursion_limit": 10}
 
     final_state = await graph.ainvoke(initial_state, config=config)
 
