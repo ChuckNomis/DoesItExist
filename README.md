@@ -1,4 +1,4 @@
-# IsExist - Invention Checker Agent
+# DoesItExist - Invention Checker Agent
 
 This project is an AI agent that accepts a user's invention idea, dynamically decides what tools to run, and returns whether the idea already exists, based on patent, product, and web data.
 
@@ -10,8 +10,8 @@ This project is an AI agent that accepts a user's invention idea, dynamically de
 - **Embeddings**: OpenAI text-embedding-3-small
 - **Vector DB**: Pinecone
 - **Web Search**: Tavily AI
-- **Patent Search**: Google Patents / Lens.org (scrape or API)
-- **Product Search**: Product Hunt, Kickstarter, Amazon (API/scrape)
+- **Patent Search**: PatentsView
+- **Scholar Search**: Semantic Scholar
 
 ## Setup
 
