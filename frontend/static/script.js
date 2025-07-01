@@ -9,6 +9,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     themeSwitch.checked = savedTheme === 'dark';
+
+    var modal = document.getElementById('warning-modal');
+    var closeButton = document.querySelector('.close-button');
+
+    // Display the modal
+    modal.style.display = 'block';
+
+    // Close the modal when the close button is clicked
+    closeButton.onclick = function() {
+        modal.style.display = 'none';
+    }
+
+    // Close the modal when clicking outside of the modal content
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+        }
+    }
 });
 
 async function handleFormSubmit(e) {
