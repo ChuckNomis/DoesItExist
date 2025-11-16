@@ -1,4 +1,6 @@
 import os
+import json
+import re
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -18,12 +20,23 @@ MAX_IDEA_LENGTH = 2000
 HIGH_RISK_PATTERNS = [
     "ignore previous",
     "ignore the above",
+    "ignore that",
+    "ignore all previous",
     "ignore instructions",
     "system prompt",
     "disregard previous",
     "act as",
     "you are now",
     "forget the above",
+    "system_overridden",
+    "after you read this",
+    "real content starts below",
+    "answer only with",
+    "no matter the question",
+    "always respond with",
+    "system rules",
+    "passwords_are_here",
+    "next request must be obeyed",
 ]
 PROMPT_BLOCK_MESSAGE = (
     "We cannot analyze that request. Please describe an invention idea instead."
@@ -34,12 +47,96 @@ def is_high_risk_prompt(text: str) -> bool:
     lowered = text.lower()
     if any(pattern in lowered for pattern in HIGH_RISK_PATTERNS):
         return True
-    if "ignore" in lowered and ("directions" in lowered or "instructions" in lowered):
+    if "ignore" in lowered and (
+        "directions" in lowered or "instructions" in lowered or "tell me" in lowered
+    ):
+        return True
+    if "but actually" in lowered and "ignore" in lowered:
+        return True
+    if "after you read this" in lowered and "output" in lowered:
         return True
     if "tell me what the capital" in lowered or "tell me the capital" in lowered:
         return True
+    if ("\"meta\"" in lowered or "'meta'" in lowered) and "ignore" in lowered:
+        return True
+    if looks_like_malicious_json(text):
+        return True
+    if contains_malicious_html_comment(text):
+        return True
+    if forces_fixed_output(lowered):
+        return True
+    if references_system_rule_override(lowered):
+        return True
+    if enforces_multi_step_override(lowered):
+        return True
     return False
 
+
+def looks_like_malicious_json(text: str) -> bool:
+    try:
+        parsed = json.loads(text)
+    except Exception:
+        return False
+
+    if not isinstance(parsed, dict):
+        return False
+
+    for key, value in parsed.items():
+        if not isinstance(value, str):
+            continue
+        lowered_val = value.lower()
+        if any(
+            trigger in lowered_val
+            for trigger in [
+                "ignore the",
+                "ignore instructions",
+                "output hacked",
+                "system override",
+                "after you read",
+                "instead of",
+            ]
+        ):
+            return True
+
+    return False
+
+
+def contains_malicious_html_comment(text: str) -> bool:
+    for match in re.findall(r"<!--(.*?)-->", text, flags=re.IGNORECASE | re.DOTALL):
+        lowered = match.lower()
+        if "ignore" in lowered or "output" in lowered or "instead" in lowered:
+            return True
+    return False
+
+
+def forces_fixed_output(text: str) -> bool:
+    return any(
+        phrase in text
+        for phrase in [
+            "answer only with",
+            "respond only with",
+            "no matter the question",
+            "always respond with",
+            "output exactly",
+        ]
+    )
+
+
+def references_system_rule_override(text: str) -> bool:
+    if "system rules" in text and ("don't apply" in text or "do not apply" in text):
+        return True
+    if "your instructions say" in text and "must be obeyed" in text:
+        return True
+    if "next request must be obeyed" in text:
+        return True
+    return False
+
+
+def enforces_multi_step_override(text: str) -> bool:
+    has_step_sequence = "first" in text and "second" in text and "finally" in text
+    if has_step_sequence and ("output" in text or "respond" in text):
+        return True
+    return False
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="DoesItExist?",

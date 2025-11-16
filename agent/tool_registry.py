@@ -5,6 +5,7 @@ from services.search_patent import search_patent
 from services.search_scholar import search_scholar
 from pydantic import BaseModel, Field
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 import os
@@ -191,12 +192,12 @@ async def summarize_results(state: dict) -> dict:
     ...and so on for the top findings.
     """
 
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", "You are an expert invention analyst following a strict output format."),
-        ("human", prompt_text)
-    ])
-
-    chain = prompt | llm
-    response = await chain.ainvoke({})
+    messages = [
+        SystemMessage(
+            content="You are an expert invention analyst following a strict output format."
+        ),
+        HumanMessage(content=prompt_text),
+    ]
+    response = await llm.ainvoke(messages)
 
     return {"verdict": response.content}
