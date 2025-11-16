@@ -249,6 +249,11 @@ h1 {
     color: var(--text-muted);
 }
 
+.input-error {
+    border-color: var(--error-color) !important;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2) !important;
+}
+
 /* Check Button */
 .check-button {
     background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
@@ -292,6 +297,33 @@ h1 {
     margin-top: 3rem;
     border-top: 2px solid var(--border-light);
     padding-top: 3rem;
+}
+
+.prompt-warning {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    border: 1px solid var(--error-color);
+    border-radius: 1rem;
+    background: var(--error-bg);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.prompt-warning-icon {
+    font-size: 2rem;
+    color: var(--error-color);
+}
+
+.prompt-warning-text h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--error-color);
+}
+
+.prompt-warning-text ul {
+    margin: 0.5rem 0 0 1.5rem;
+    padding: 0;
+    color: var(--text-secondary);
 }
 
 /* Verdict Section */

@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function handleFormSubmit(e) {
     e.preventDefault();
     const ideaText = document.getElementById('idea-text').value;
+    const ideaTextarea = document.getElementById('idea-text');
     if (!ideaText.trim()) {
         alert('Please enter an idea.');
         return;
@@ -42,6 +43,7 @@ async function handleFormSubmit(e) {
     const submitButton = this.querySelector('button');
 
     resultsContainer.classList.remove('hidden');
+    ideaTextarea.classList.remove('input-error');
     resultsContent.innerHTML = '<div class="spinner"></div>';
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking...';
@@ -56,8 +58,24 @@ async function handleFormSubmit(e) {
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            let userMessage = 'Something went wrong. Please try again.';
+            let isPromptBlocked = false;
+            try {
+                const errorData = await response.json();
+                if (typeof errorData.detail === 'string') {
+                    userMessage = errorData.detail;
+                } else if (errorData.detail?.message) {
+                    userMessage = errorData.detail.message;
+                }
+            } catch {
+                // ignore json parse error, fallback to default message
+            }
+            if (response.status === 400) {
+                isPromptBlocked = true;
+            }
+            const err = new Error(userMessage);
+            err.isPromptBlocked = isPromptBlocked;
+            throw err;
         }
 
         const data = await response.json();
@@ -71,7 +89,27 @@ async function handleFormSubmit(e) {
 
     } catch (error) {
         console.error('Error:', error);
-        resultsContent.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+        if (error.isPromptBlocked) {
+            ideaTextarea.classList.add('input-error');
+            resultsContent.innerHTML = `
+                <div class="prompt-warning">
+                    <div class="prompt-warning-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="prompt-warning-text">
+                        <h3>Input Not Accepted</h3>
+                        <p>${error.message}</p>
+                        <ul>
+                            <li>Describe your invention idea in your own words.</li>
+                            <li>Avoid requests that try to change the agent's instructions.</li>
+                            <li>Focus on features, use cases, or target users.</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultsContent.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+        }
     } finally {
         submitButton.disabled = false;
         submitButton.innerHTML = '<i class="fas fa-search"></i> Check If It Exists';
